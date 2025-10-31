@@ -1,0 +1,21 @@
+
+
+
+
+
+sudo python3 -m pip install pymongo
+
+###Open mongo
+use test1 
+db.createCollection("emp")
+
+###Open Python
+from pymongo import MongoClient
+client=MongoClient("mongodb://127.0.0.1:27017")
+database=client.test1
+collection=database.emp
+collection.insert_one({"name":"smartphone","quantity":"10","price":"50000"})
+print("inserted")
+client.close()
+
+## check output in mongo
