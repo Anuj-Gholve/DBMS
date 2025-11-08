@@ -1,0 +1,143 @@
+🧱 Create Database and Employee Collection
+use CompanyDB;
+
+📘 Create and Insert Documents
+db.Employee.insertMany([
+  {
+    Name: { FName: "Dhruv", LName: "Kumar" },
+    Company_name: "Infosys",
+    Salary: 55000,
+    Designation: "Programmer",
+    Age: 26,
+    Expertise: ["MongoDB", "NodeJS", "ReactJS"],
+    DOB: "1999-04-12",
+    Email: "anuj.kumar@infosys.com",
+    Contact: "9876543210",
+    Address: [
+      { PAddr: "Pune, Maharashtra" },
+      { LAddr: "Bangalore, Karnataka" }
+    ]
+  },
+  {
+    Name: { FName: "Riya", LName: "Patil" },
+    Company_name: "TCS",
+    Salary: 48000,
+    Designation: "Tester",
+    Age: 25,
+    Expertise: ["MySQL", "Selenium", "Cypress"],
+    DOB: "2000-06-15",
+    Email: "riya.patil@tcs.com",
+    Contact: "9988776655",
+    Address: [
+      { PAddr: "Mumbai, Maharashtra" },
+      { LAddr: "Chennai, Tamil Nadu" }
+    ]
+  },
+  {
+    Name: { FName: "Aman", LName: "Verma" },
+    Company_name: "Infosys",
+    Salary: 38000,
+    Designation: "Developer",
+    Age: 28,
+    Expertise: ["MongoDB", "Java", "SpringBoot"],
+    DOB: "1997-02-05",
+    Email: "aman.verma@infosys.com",
+    Contact: "9090909090",
+    Address: [
+      { PAddr: "Delhi" },
+      { LAddr: "Noida" }
+    ]
+  },
+  {
+    Name: { FName: "Maya", LName: "Deshmukh" },
+    Company_name: "Wipro",
+    Salary: 60000,
+    Designation: "Programmer",
+    Age: 29,
+    Expertise: ["MongoDB", "MySQL", "Cassandra"],
+    DOB: "1996-07-09",
+    Email: "maya.deshmukh@wipro.com",
+    Contact: "9876501234",
+    Address: [
+      { PAddr: "Nagpur, Maharashtra" },
+      { LAddr: "Hyderabad, Telangana" }
+    ]
+  },
+  {
+    Name: { FName: "Gopal", LName: "Sharma" },
+    Company_name: "TCS",
+    Salary: 47000,
+    Designation: "Analyst",
+    Age: 27,
+    Expertise: ["Python", "MongoDB", "PowerBI"],
+    DOB: "1998-01-23",
+    Email: "gopal.sharma@tcs.com",
+    Contact: "9123456789",
+    Address: [
+      { PAddr: "Kolkata, West Bengal" },
+      { LAddr: "Pune, Maharashtra" }
+    ]
+  }
+]);
+
+🧩 Queries1️⃣ Find name of Employee where age < 30 and salary > 50000
+db.Employee.find(
+  { Age: { $lt: 30 }, Salary: { $gt: 50000 } },
+  { "Name.FName": 1, "Name.LName": 1, _id: 0 }
+).pretty();
+
+2️⃣ Create a new document if no document contains
+
+{Designation: "Tester", Company_name: "TCS", Age: 25}
+
+db.Employee.updateOne(
+  { Designation: "Tester", Company_name: "TCS", Age: 25 },
+  {
+    $setOnInsert: {
+      Name: { FName: "Sonal", LName: "Joshi" },
+      Salary: 40000,
+      Expertise: ["MySQL", "MongoDB"],
+      DOB: "2001-02-14",
+      Email: "sonal.joshi@tcs.com",
+      Contact: "9998887777",
+      Address: [{ PAddr: "Pune" }, { LAddr: "Mumbai" }]
+    }
+  },
+  { upsert: true }
+);
+
+
+📝 If it already exists, nothing will be added.
+
+3️⃣ Select all documents where age < 30 OR salary > 40000
+db.Employee.find({
+  $or: [
+    { Age: { $lt: 30 } },
+    { Salary: { $gt: 40000 } }
+  ]
+}).pretty();
+
+4️⃣ Find documents where Designation ≠ "Developer"
+db.Employee.find({
+  Designation: { $ne: "Developer" }
+}).pretty();
+
+5️⃣ Find _id, Designation, Address, and Name
+
+where Company_name = "Infosys"
+
+db.Employee.find(
+  { Company_name: "Infosys" },
+  { _id: 1, Designation: 1, Address: 1, Name: 1 }
+).pretty();
+
+6️⃣ Display only FName and LName of all Employees
+db.Employee.find(
+  {},
+  { "Name.FName": 1, "Name.LName": 1, _id: 0 }
+).pretty();
+
+
+✅ Optional – View All Documents
+
+db.Employee.find().pretty();

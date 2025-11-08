@@ -1,0 +1,175 @@
+1️⃣ Create Tables with Constraints
+-- Branch Table
+CREATE TABLE Branch (
+    branch_name VARCHAR(50) PRIMARY KEY,
+    branch_city VARCHAR(50) NOT NULL,
+    assets DECIMAL(15,2)
+);
+
+-- Account Table
+CREATE TABLE Account (
+    acc_no INT PRIMARY KEY,
+    branch_name VARCHAR(50),
+    balance DECIMAL(15,2) NOT NULL,
+    FOREIGN KEY (branch_name) REFERENCES Branch(branch_name)
+);
+
+-- Customer Table
+CREATE TABLE Customer (
+    cust_name VARCHAR(50) PRIMARY KEY,
+    cust_street VARCHAR(100),
+    cust_city VARCHAR(50)
+);
+
+-- Depositor Table
+CREATE TABLE Depositor (
+    cust_name VARCHAR(50),
+    acc_no INT,
+    PRIMARY KEY (cust_name, acc_no),
+    FOREIGN KEY (cust_name) REFERENCES Customer(cust_name),
+    FOREIGN KEY (acc_no) REFERENCES Account(acc_no)
+);
+
+-- Loan Table
+CREATE TABLE Loan (
+    loan_no INT PRIMARY KEY,
+    branch_name VARCHAR(50),
+    amount DECIMAL(15,2) NOT NULL,
+    FOREIGN KEY (branch_name) REFERENCES Branch(branch_name)
+);
+
+-- Borrower Table
+CREATE TABLE Borrower (
+    cust_name VARCHAR(50),
+    loan_no INT,
+    PRIMARY KEY (cust_name, loan_no),
+    FOREIGN KEY (cust_name) REFERENCES Customer(cust_name),
+    FOREIGN KEY (loan_no) REFERENCES Loan(loan_no)
+);
+
+2️⃣ Sample Data
+INSERT INTO Branch VALUES 
+('Pune_Station', 'Pune', 900000),
+('Camp', 'Pune', 800000),
+('Shivaji_Nagar', 'Pune', 850000);
+
+INSERT INTO Account VALUES 
+(101, 'Pune_Station', 15000),
+(102, 'Camp', 20000),
+(103, 'Shivaji_Nagar', 18000);
+
+INSERT INTO Customer VALUES 
+('Rahul', 'MG Road', 'Pune'),
+('Priya', 'Baner', 'Mumbai'),
+('Sneha', 'Camp', 'Pune'),
+('Karan', 'Kothrud', 'Pune');
+
+INSERT INTO Depositor VALUES 
+('Rahul', 101),
+('Priya', 102),
+('Sneha', 103);
+
+INSERT INTO Loan VALUES 
+(201, 'Pune_Station', 12000),
+(202, 'Camp', 18000),
+(203, 'Pune_Station', 15000);
+
+INSERT INTO Borrower VALUES 
+('Rahul', 201),
+('Karan', 203);
+
+3️⃣ Queries
+Q1. Create View1 — List all customers (alphabetical) who have a loan from 'Pune_Station' branch
+CREATE VIEW View1 AS
+SELECT DISTINCT c.cust_name
+FROM Customer c
+JOIN Borrower b ON c.cust_name = b.cust_name
+JOIN Loan l ON b.loan_no = l.loan_no
+WHERE l.branch_name = 'Pune_Station'
+ORDER BY c.cust_name ASC;
+
+
+To see the result:
+
+SELECT * FROM View1;
+
+Q2. Create View2 on Branch table (two columns) and perform Insert, Update, Delete
+CREATE VIEW View2 AS
+SELECT branch_name, assets
+FROM Branch;
+
+
+Insert
+
+INSERT INTO View2 VALUES ('Deccan', 750000);
+
+
+Update
+
+UPDATE View2 SET assets = 950000 WHERE branch_name = 'Camp';
+
+
+Delete
+
+DELETE FROM View2 WHERE branch_name = 'Deccan';
+
+Q3. Create View3 on Borrower and Depositor table (one column from each)
+CREATE VIEW View3 AS
+SELECT b.cust_name, d.acc_no
+FROM Borrower b
+JOIN Depositor d ON b.cust_name = d.cust_name;
+
+
+Insert
+
+INSERT INTO View3 VALUES ('Sneha', 103);
+
+
+Update
+
+UPDATE View3 SET acc_no = 102 WHERE cust_name = 'Sneha';
+
+
+Delete
+
+DELETE FROM View3 WHERE cust_name = 'Sneha';
+
+Q4. Create Union of LEFT and RIGHT JOIN for customers who have account or loan or both
+SELECT DISTINCT c.cust_name
+FROM Customer c
+LEFT JOIN Depositor d ON c.cust_name = d.cust_name
+LEFT JOIN Borrower b ON c.cust_name = b.cust_name
+
+UNION
+
+SELECT DISTINCT c.cust_name
+FROM Customer c
+RIGHT JOIN Depositor d ON c.cust_name = d.cust_name
+RIGHT JOIN Borrower b ON c.cust_name = b.cust_name;
+
+Q5. Create Simple and Unique Index
+-- Simple index on customer city
+CREATE INDEX idx_customer_city ON Customer(cust_city);
+
+-- Unique index on account number
+CREATE UNIQUE INDEX idx_account_no ON Account(acc_no);
+
+Q6. Display Index Information
+
+✅ For MySQL
+
+SHOW INDEX FROM Customer;
+SHOW INDEX FROM Account;
+
+
+✅ For SQL Server
+
+EXEC sp_helpindex 'Customer';
+EXEC sp_helpindex 'Account';
+
+
+✅ For Oracle
+
+SELECT INDEX_NAME, TABLE_NAME, UNIQUENESS
+FROM USER_INDEXES
+WHERE TABLE_NAME IN ('CUSTOMER', 'ACCOUNT');

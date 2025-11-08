@@ -1,0 +1,87 @@
+1️⃣ Create Tables with Constraints
+-- Employee Table
+CREATE TABLE Employee (
+    emp_id INT PRIMARY KEY,
+    employee_name VARCHAR(50) NOT NULL,
+    street VARCHAR(100),
+    city VARCHAR(50)
+);
+
+-- Company Table
+CREATE TABLE Company (
+    company_name VARCHAR(50) PRIMARY KEY,
+    city VARCHAR(50) NOT NULL
+);
+
+-- Works Table
+CREATE TABLE Works (
+    employee_name VARCHAR(50),
+    company_name VARCHAR(50),
+    salary DECIMAL(10,2) CHECK (salary > 0),
+    PRIMARY KEY (employee_name, company_name),
+    FOREIGN KEY (employee_name) REFERENCES Employee(employee_name),
+    FOREIGN KEY (company_name) REFERENCES Company(company_name)
+);
+
+-- Manages Table
+CREATE TABLE Manages (
+    employee_name VARCHAR(50),
+    manager_name VARCHAR(50),
+    PRIMARY KEY (employee_name),
+    FOREIGN KEY (employee_name) REFERENCES Employee(employee_name)
+);
+
+2️⃣ Insert Sample Data
+INSERT INTO Employee VALUES
+(1, 'Rahul', 'MG Road', 'Pune'),
+(2, 'Priya', 'Baner', 'Mumbai'),
+(3, 'Amit', 'Brigade Road', 'Delhi'),
+(4, 'Sneha', 'Kothrud', 'Hyderabad'),
+(5, 'Karan', 'FC Road', 'Pune');
+
+INSERT INTO Company VALUES
+('TCS', 'Pune'),
+('InfoSys', 'Chennai'),
+('TechM', 'Delhi');
+
+INSERT INTO Works VALUES
+('Rahul', 'TCS', 15000),
+('Priya', 'InfoSys', 12000),
+('Amit', 'TechM', 9000),
+('Sneha', 'TechM', 15000),
+('Karan', 'InfoSys', 10000);
+
+INSERT INTO Manages VALUES
+('Rahul', 'Amit'),
+('Priya', 'Sneha'),
+('Amit', 'Rahul'),
+('Sneha', 'Karan'),
+('Karan', 'Priya');
+
+3️⃣ Queries
+Q1. Find the names of all employees who work for 'TCS'
+SELECT employee_name
+FROM Works
+WHERE company_name = 'TCS';
+
+Q2. Find the names and company names of all employees sorted by company name (ASC) and employee name (DESC)
+SELECT employee_name, company_name
+FROM Works
+ORDER BY company_name ASC, employee_name DESC;
+
+Q3. Change the city of employees working with 'InfoSys' to 'Bangalore'
+UPDATE Employee
+SET city = 'Bangalore'
+WHERE employee_name IN (
+    SELECT employee_name FROM Works WHERE company_name = 'InfoSys'
+);
+
+Q4. Find names, street, and city of employees who work for 'TechM' and earn more than $10,000
+SELECT e.employee_name, e.street, e.city
+FROM Employee e
+JOIN Works w ON e.employee_name = w.employee_name
+WHERE w.company_name = 'TechM' AND w.salary > 10000;
+
+Q5. Add column Asset to Company table
+ALTER TABLE Company
+ADD Asset DECIMAL(15,2);

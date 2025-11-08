@@ -1,0 +1,230 @@
+0) Use DB and insert 5 sample docs
+use CompanyDB;
+
+db.Employee.insertMany([
+  {
+    Emp_id: 101,
+    Name: { FName: "Swapnil", LName: "Jadhav" },
+    Company_name: "Infosys",
+    Salary: 55000,
+    Designation: "Programmer",
+    Age: 26,
+    Expertise: ["MongoDB", "NodeJS", "ReactJS"],
+    DOB: ISODate("1999-04-12"),
+    Email: "swapnil.jadhav@infosys.com",
+    Contact: "9876500001",
+    Address: [
+      { PAddr: { city: "Pune", Pin_code: "411001" } },
+      { LAddr: { city: "Mumbai", Pin_code: "400001" } }
+    ]
+  },
+  {
+    Emp_id: 102,
+    Name: { FName: "Riya", LName: "Patil" },
+    Company_name: "TCS",
+    Salary: 48000,
+    Designation: "Tester",
+    Age: 25,
+    Expertise: ["MySQL", "Selenium", "Cypress"],
+    DOB: ISODate("2000-06-15"),
+    Email: "riya.patil@tcs.com",
+    Contact: "9988776655",
+    Address: [
+      { PAddr: { city: "Mumbai", Pin_code: "400001" } }
+    ]
+  },
+  {
+    Emp_id: 103,
+    Name: { FName: "Aman", LName: "Verma" },
+    Company_name: "Wipro",
+    Salary: 39000,
+    Designation: "DBA",
+    Age: 28,
+    Expertise: ["MongoDB", "Oracle", "Backup"],
+    DOB: ISODate("1997-02-05"),
+    Email: "aman.verma@wipro.com",
+    Contact: "9090909090",
+    Address: [
+      { PAddr: { city: "Delhi", Pin_code: "110001" } }
+    ]
+  },
+  {
+    Emp_id: 104,
+    Name: { FName: "Maya", LName: "Deshmukh" },
+    Company_name: "TCS",
+    Salary: 60000,
+    Designation: "DBA",
+    Age: 29,
+    Expertise: ["MongoDB", "MySQL", "Cassandra"],
+    DOB: ISODate("1996-07-09"),
+    Email: "maya.deshmukh@tcs.com",
+    Contact: "9876501234",
+    Address: [
+      { PAddr: { city: "Pune", Pin_code: "411001" } }
+    ]
+  },
+  {
+    Emp_id: 105,
+    Name: { FName: "Gopal", LName: "Sharma" },
+    Company_name: "TechM",
+    Salary: 47000,
+    Designation: "Developer",
+    Age: 27,
+    Expertise: ["Python", "MongoDB", "PowerBI"],
+    DOB: ISODate("1998-01-23"),
+    Email: "gopal.sharma@techm.com",
+    Contact: "9123456789",
+    Address: [
+      { PAddr: { city: "Kolkata", Pin_code: "700001" } }
+    ]
+  }
+]);
+
+1) Aggregation — “Separate values in Expertise array and return sum of each element of array”
+
+Two interpretations — pick the one you need.
+
+A. Count of employees per expertise (how many times each expertise appears):
+
+db.Employee.aggregate([
+  { $unwind: "$Expertise" },
+  { $group: { _id: "$Expertise", count: { $sum: 1 } } },
+  { $project: { Expertise: "$_id", count: 1, _id: 0 } },
+  { $sort: { count: -1 } }
+]);
+
+
+Output example: { Expertise: "MongoDB", count: 5 }, etc.
+
+B. Sum of salaries of employees grouped by expertise (i.e., for each expertise sum the Salary of employees who list it):
+
+db.Employee.aggregate([
+  { $unwind: "$Expertise" },
+  { $group: { _id: "$Expertise", totalSalary: { $sum: "$Salary" } } },
+  { $project: { Expertise: "$_id", totalSalary: 1, _id: 0 } },
+  { $sort: { totalSalary: -1 } }
+]);
+
+
+Choose A if you need counts, B if you need salary sums per expertise.
+
+2) Aggregate — return Max and Min Salary for each company
+db.Employee.aggregate([
+  { $group: {
+      _id: "$Company_name",
+      maxSalary: { $max: "$Salary" },
+      minSalary: { $min: "$Salary" },
+      avgSalary: { $avg: "$Salary" },        // optional
+      count: { $sum: 1 }                    // optional
+  }},
+  { $project: {
+      Company_name: "$_id",
+      maxSalary: 1,
+      minSalary: 1,
+      avgSalary: { $round: ["$avgSalary", 2] },
+      count: 1,
+      _id: 0
+  }},
+  { $sort: { Company_name: 1 } }
+]);
+
+3) Aggregate — find Employee Total Salary for Each City with Designation = "DBA"
+
+Because Address is an array of embedded docs, unwind it and extract city. Use $ifNull to check PAddr.city then LAddr.city.
+
+db.Employee.aggregate([
+  { $match: { Designation: "DBA" } },
+  { $unwind: "$Address" },
+  { $project: {
+      Emp_id: 1,
+      Name: 1,
+      Salary: 1,
+      city: {
+        $ifNull: [ "$Address.PAddr.city", "$Address.LAddr.city" ]
+      }
+  }},
+  { $match: { city: { $ne: null } } },
+  { $group: {
+      _id: "$city",
+      totalSalary: { $sum: "$Salary" },
+      employees: { $push: { Emp_id: "$Emp_id", Name: "$Name", Salary: "$Salary" } }
+  }},
+  { $project: { city: "$_id", totalSalary: 1, employees: 1, _id: 0 } },
+  { $sort: { totalSalary: -1 } }
+]);
+
+
+Result: documents with city, totalSalary and list of DBA employees in that city.
+
+4) Aggregation — return separated Expertise values for employee Swapnil Jadhav
+db.Employee.aggregate([
+  { $match: { "Name.FName": "Swapnil", "Name.LName": "Jadhav" } },
+  { $project: { Name: 1, Expertise: 1, _id: 0 } },
+  { $unwind: "$Expertise" },
+  { $project: { fullName: { $concat: ["$Name.FName", " ", "$Name.LName"] }, Expertise: 1 } }
+]);
+
+
+Output: one doc per expertise, e.g. { fullName: "Swapnil Jadhav", Expertise: "MongoDB" }, etc.
+
+5) Create Compound Index on Name and Age
+
+Your requirement: Name: 1, Age: -1.
+
+Note: indexing the whole Name object is possible but usually you index subfields like Name.FName / Name.LName. Below are two options:
+
+a) Index on Name object and Age descending (indexes whole object — matches exact object queries):
+
+db.Employee.createIndex({ "Name": 1, Age: -1 });
+
+
+b) More common: index on Name.FName (or Name.LName) and Age descending:
+
+db.Employee.createIndex({ "Name.FName": 1, Age: -1 });
+-- or include LName too:
+db.Employee.createIndex({ "Name.FName": 1, "Name.LName": 1, Age: -1 });
+
+
+Use (b) unless you really need to query by the entire Name object.
+
+6) Create an index on Emp_id and compare search time before & after (add ≥10000 docs)
+Bulk-add many docs (example)
+// run in mongo shell
+let bulk = db.Employee.initializeUnorderedBulkOp();
+let start = 200; // to avoid collisions with existing Emp_id 101..105
+for (let i = start; i < start + 10000; i++) {
+  bulk.insert({
+    Emp_id: i,
+    Name: { FName: "F" + i, LName: "L" + i },
+    Company_name: (i % 3 === 0) ? "TCS" : "Infosys",
+    Salary: 30000 + (i % 20000),
+    Designation: (i % 7 === 0) ? "DBA" : "Developer",
+    Age: 22 + (i % 30),
+    Expertise: ["Skill" + (i % 10)],
+    DOB: new Date(1990 + (i % 30), 0, 1),
+    Email: "user" + i + "@example.com",
+    Contact: "9" + (100000000 + i).toString().slice(1),
+    Address: [{ PAddr: { city: "City" + (i % 20), Pin_code: "1000" + (i % 900) } }]
+  });
+}
+bulk.execute();
+
+Measure BEFORE creating index
+db.Employee.find({ Emp_id: 500 }).explain("executionStats")
+
+
+Record executionStats.executionTimeMillis and executionStats.totalDocsExamined. You should see a COLLSCAN.
+
+Create index on Emp_id
+db.Employee.createIndex({ Emp_id: 1 });
+
+Measure AFTER creating index
+db.Employee.find({ Emp_id: 500 }).explain("executionStats")
+
+
+Now examine executionStats.executionTimeMillis, totalKeysExamined, totalDocsExamined. Expect totalDocsExamined and time to drop drastically and the plan to use IXSCAN.
+
+Tip: run the query a few times and average results. Use the same test Emp_id value present in DB.
+
+7) List all indexes on the collection
+db.Employee.getIndexes();

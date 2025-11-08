@@ -1,0 +1,76 @@
+1️⃣ Create Tables with Constraints
+-- Branch Table
+CREATE TABLE Branch (
+    branch_name VARCHAR(50) PRIMARY KEY,
+    branch_city VARCHAR(50) NOT NULL,
+    assets DECIMAL(15,2)
+);
+
+-- Account Table
+CREATE TABLE Account (
+    acc_no INT PRIMARY KEY,
+    branch_name VARCHAR(50) NOT NULL,
+    balance DECIMAL(15,2) NOT NULL,
+    FOREIGN KEY (branch_name) REFERENCES Branch(branch_name)
+);
+
+-- Customer Table
+CREATE TABLE Customer (
+    cust_name VARCHAR(50) PRIMARY KEY,
+    cust_street VARCHAR(100),
+    cust_city VARCHAR(50)
+);
+
+-- Depositor Table
+CREATE TABLE Depositor (
+    cust_name VARCHAR(50),
+    acc_no INT,
+    PRIMARY KEY (cust_name, acc_no),
+    FOREIGN KEY (cust_name) REFERENCES Customer(cust_name),
+    FOREIGN KEY (acc_no) REFERENCES Account(acc_no)
+);
+
+-- Loan Table
+CREATE TABLE Loan (
+    loan_no INT PRIMARY KEY,
+    branch_name VARCHAR(50) NOT NULL,
+    amount DECIMAL(15,2) NOT NULL,
+    FOREIGN KEY (branch_name) REFERENCES Branch(branch_name)
+);
+
+-- Borrower Table
+CREATE TABLE Borrower (
+    cust_name VARCHAR(50),
+    loan_no INT,
+    PRIMARY KEY (cust_name, loan_no),
+    FOREIGN KEY (cust_name) REFERENCES Customer(cust_name),
+    FOREIGN KEY (loan_no) REFERENCES Loan(loan_no)
+);
+
+2️⃣ Find all customers who have both account and loan at bank
+SELECT DISTINCT d.cust_name
+FROM Depositor d
+JOIN Borrower b ON d.cust_name = b.cust_name;
+
+3️⃣ Find all customers who have an account or loan or both at bank
+SELECT DISTINCT cust_name
+FROM Depositor
+UNION
+SELECT DISTINCT cust_name
+FROM Borrower;
+
+4️⃣ Find all customers who have account but no loan at the bank
+SELECT DISTINCT d.cust_name
+FROM Depositor d
+WHERE d.cust_name NOT IN (SELECT cust_name FROM Borrower);
+
+5️⃣ Find average account balance at 'Wadia College' branch
+SELECT AVG(balance) AS avg_balance
+FROM Account
+WHERE branch_name = 'Wadia College';
+
+6️⃣ Find number of depositors at each branch
+SELECT a.branch_name, COUNT(DISTINCT d.cust_name) AS no_of_depositors
+FROM Account a
+JOIN Depositor d ON a.acc_no = d.acc_no
+GROUP BY a.branch_name;

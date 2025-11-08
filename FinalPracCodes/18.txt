@@ -1,0 +1,70 @@
+-- Problem 18: PL/SQL block to check student attendance and update status,
+-- with exception handling.
+
+-- --- Setup ---
+-- Run this once to create the table.
+/*
+CREATE TABLE Stud (
+  Roll NUMBER PRIMARY KEY,
+  Name VARCHAR2(100),
+  Attendance NUMBER(5, 2), -- Stored as percentage, e.g., 80.50
+  Status VARCHAR2(20)
+);
+
+-- Sample Data
+INSERT INTO Stud (Roll, Name, Attendance) VALUES (101, 'Student X', 85.00);
+INSERT INTO Stud (Roll, Name, Attendance) VALUES (102, 'Student Y', 70.00);
+INSERT INTO Stud (Roll, Name, Attendance) VALUES (103, 'Student Z', 74.99);
+COMMIT;
+*/
+
+-- --- PL/SQL Block ---
+SET SERVEROUTPUT ON;
+
+-- This block uses a substitution variable (&) to accept user input.
+DECLARE
+  p_roll_no       Stud.Roll%TYPE := &p_roll_no;
+  v_attendance    Stud.Attendance%TYPE;
+  v_new_status    Stud.Status%TYPE;
+  v_message       VARCHAR2(100);
+  
+BEGIN
+  -- 1. Get the attendance for the roll number entered by the user
+  SELECT Attendance
+  INTO v_attendance
+  FROM Stud
+  WHERE Roll = p_roll_no;
+  
+  -- 2. Check the attendance percentage
+  IF v_attendance < 75 THEN
+    v_message := 'Term not granted';
+    v_new_status := 'Detained';
+  ELSE
+    v_message := 'Term granted';
+    v_new_status := 'Not Detained';
+  END IF;
+  
+  -- 3. Update the status in the Stud table
+  UPDATE Stud
+  SET Status = v_new_status
+  WHERE Roll = p_roll_no;
+  
+  -- 4. Display the message
+  DBMS_OUTPUT.PUT_LINE('Roll No: ' || p_roll_no);
+  DBMS_OUTPUT.PUT_LINE('Attendance: ' || v_attendance || '%');
+  DBMS_OUTPUT.PUT_LINE('Result: ' || v_message);
+  DBMS_OUTPUT.PUT_LINE('Status Updated to: ' || v_new_status);
+  
+  COMMIT;
+
+EXCEPTION
+  -- Handle the exception if the roll number is not found
+  WHEN NO_DATA_FOUND THEN
+    DBMS_OUTPUT.PUT_LINE('Error: Roll number ' || p_roll_no || ' not found in the Stud table.');
+    
+  -- Handle any other unexpected errors
+  WHEN OTHERS THEN
+    DBMS_OUTPUT.PUT_LINE('An unexpected error occurred: ' || SQLERRM);
+    ROLLBACK;
+END;
+/

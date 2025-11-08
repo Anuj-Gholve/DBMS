@@ -1,0 +1,151 @@
+🧱 Create Database and Employee Collection
+use CompanyDB;
+
+📘 Insert Documents
+db.Employee.insertMany([
+  {
+    Emp_id: 101,
+    Name: { FName: "Krish", LName: "Kumar" },
+    Company_name: "Infosys",
+    Salary: 55000,
+    Designation: "Programmer",
+    Age: 26,
+    Expertise: ["MongoDB", "NodeJS", "ReactJS"],
+    DOB: "1999-04-12",
+    Email: "anuj.kumar@infosys.com",
+    Contact: "9876543210",
+    Address: [
+      { PAddr: { city: "Pune", Pin_code: "411001" } },
+      { LAddr: { city: "Bangalore", Pin_code: "560001" } }
+    ]
+  },
+  {
+    Emp_id: 102,
+    Name: { FName: "Riya", LName: "Patil" },
+    Company_name: "TCS",
+    Salary: 48000,
+    Designation: "Tester",
+    Age: 25,
+    Expertise: ["MySQL", "Selenium", "Cypress"],
+    DOB: "2000-06-15",
+    Email: "riya.patil@tcs.com",
+    Contact: "9988776655",
+    Address: [
+      { PAddr: { city: "Mumbai", Pin_code: "400001" } },
+      { LAddr: { city: "Chennai", Pin_code: "600001" } }
+    ]
+  },
+  {
+    Emp_id: 103,
+    Name: { FName: "Aman", LName: "Verma" },
+    Company_name: "Wipro",
+    Salary: 39000,
+    Designation: "Developer",
+    Age: 28,
+    Expertise: ["MongoDB", "Java", "SpringBoot"],
+    DOB: "1997-02-05",
+    Email: "aman.verma@wipro.com",
+    Contact: "9090909090",
+    Address: [
+      { PAddr: { city: "Delhi", Pin_code: "110001" } },
+      { LAddr: { city: "Noida", Pin_code: "201301" } }
+    ]
+  },
+  {
+    Emp_id: 104,
+    Name: { FName: "Maya", LName: "Deshmukh" },
+    Company_name: "TCS",
+    Salary: 60000,
+    Designation: "Developer",
+    Age: 29,
+    Expertise: ["MongoDB", "MySQL", "Cassandra"],
+    DOB: "1996-07-09",
+    Email: "maya.deshmukh@tcs.com",
+    Contact: "9876501234",
+    Address: [
+      { PAddr: { city: "Pune", Pin_code: "411001" } },
+      { LAddr: { city: "Hyderabad", Pin_code: "500001" } }
+    ]
+  },
+  {
+    Emp_id: 105,
+    Name: { FName: "Gopal", LName: "Sharma" },
+    Company_name: "TechM",
+    Salary: 47000,
+    Designation: "Analyst",
+    Age: 27,
+    Expertise: ["Python", "MongoDB", "PowerBI"],
+    DOB: "1998-01-23",
+    Email: "gopal.sharma@techm.com",
+    Contact: "9123456789",
+    Address: [
+      { PAddr: { city: "Kolkata", Pin_code: "700001" } },
+      { LAddr: { city: "Pune", Pin_code: "411001" } }
+    ]
+  }
+]);
+
+🧩 Queries
+1️⃣ Create a new document if no document contains
+
+{Designation: "Tester", Company_name: "TCS", Age: 25}
+
+db.Employee.updateOne(
+  { Designation: "Tester", Company_name: "TCS", Age: 25 },
+  {
+    $setOnInsert: {
+      Emp_id: 106,
+      Name: { FName: "Sonal", LName: "Joshi" },
+      Salary: 40000,
+      Expertise: ["MySQL", "MongoDB"],
+      DOB: "2001-02-14",
+      Email: "sonal.joshi@tcs.com",
+      Contact: "9998887777",
+      Address: [{ PAddr: { city: "Pune", Pin_code: "411001" } }]
+    }
+  },
+  { upsert: true }
+);
+
+
+📝 This will insert only if such a document does not exist.
+
+2️⃣ Find all employees working with "TCS" and increase their salary by 2000
+db.Employee.updateMany(
+  { Company_name: "TCS" },
+  { $inc: { Salary: 2000 } }
+);
+
+
+✅ All TCS employees get a ₹2000 raise.
+
+3️⃣ Match all documents where Address contains
+
+only { city: "Pune", Pin_code: "411001" }
+
+db.Employee.find({
+  Address: { $elemMatch: { "PAddr.city": "Pune", "PAddr.Pin_code": "411001" } }
+}).pretty();
+
+
+💡 This searches for employees having a permanent address (PAddr) in Pune with pin 411001.
+
+4️⃣ Find employee details who are working as "Developer" or "Tester"
+db.Employee.find({
+  $or: [{ Designation: "Developer" }, { Designation: "Tester" }]
+}).pretty();
+
+5️⃣ Drop a single document where Designation = "Developer"
+db.Employee.deleteOne({ Designation: "Developer" });
+
+
+✅ Removes only one matching document from the collection.
+
+6️⃣ Count number of documents in employee collection
+db.Employee.countDocuments();
+
+
+✅ Returns total number of documents present.
+
+Optional — Display all employee records
+db.Employee.find().pretty();

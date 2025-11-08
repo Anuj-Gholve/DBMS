@@ -1,0 +1,92 @@
+Table Creation
+CREATE TABLE Companies (
+    comp_id INT PRIMARY KEY,
+    name VARCHAR(50) NOT NULL,
+    cost DECIMAL(10,2),
+    year INT
+);
+
+CREATE TABLE Orders (
+    comp_id INT,
+    domain VARCHAR(50),
+    quantity INT,
+    FOREIGN KEY (comp_id) REFERENCES Companies(comp_id)
+);
+
+Insert Sample Data
+INSERT INTO Companies VALUES 
+(101, 'Infosys', 50000, 2018),
+(102, 'TCS', 65000, 2019),
+(103, 'Wipro', 45000, 2020),
+(104, 'TechM', 60000, 2017);
+
+INSERT INTO Orders VALUES 
+(101, 'AI', 30),
+(102, 'Web', 45),
+(103, 'Cloud', 25),
+(104, 'IoT', 20);
+
+Queries
+1️⃣ Find names, costs, domains and quantities using Inner Join
+SELECT c.name, c.cost, o.domain, o.quantity
+FROM Companies c
+INNER JOIN Orders o ON c.comp_id = o.comp_id;
+
+2️⃣ Using Left Outer Join
+SELECT c.name, c.cost, o.domain, o.quantity
+FROM Companies c
+LEFT JOIN Orders o ON c.comp_id = o.comp_id;
+
+3️⃣ Using Right Outer Join
+SELECT c.name, c.cost, o.domain, o.quantity
+FROM Companies c
+RIGHT JOIN Orders o ON c.comp_id = o.comp_id;
+
+4️⃣ Using UNION operator
+SELECT c.name, c.cost, o.domain, o.quantity
+FROM Companies c
+INNER JOIN Orders o ON c.comp_id = o.comp_id
+UNION
+SELECT c.name, c.cost, o.domain, o.quantity
+FROM Companies c
+LEFT JOIN Orders o ON c.comp_id = o.comp_id;
+
+5️⃣ Create View1 showing company name and quantity
+CREATE VIEW View1 AS
+SELECT c.name, o.quantity
+FROM Companies c
+JOIN Orders o ON c.comp_id = o.comp_id;
+
+
+✅ Display contents of View1
+
+SELECT * FROM View1;
+
+6️⃣ Create View2 and perform operations
+CREATE VIEW View2 AS
+SELECT name, cost FROM Companies;
+
+
+Insert into View2
+
+INSERT INTO View2 VALUES ('HCL', 55000);
+
+
+Update View2
+
+UPDATE View2 SET cost = 58000 WHERE name = 'HCL';
+
+
+Delete from View2
+
+DELETE FROM View2 WHERE name = 'HCL';
+
+
+✅ Display contents of View2
+
+SELECT * FROM View2;
+
+Final Outputs
+Display content of both views
+SELECT * FROM View1;
+SELECT * FROM View2;

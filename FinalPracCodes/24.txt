@@ -1,0 +1,91 @@
+-- Problem 24: After trigger for Insert, Update, Delete on Emp.
+-- a) Notify if inserted salary < 50,000
+-- b) Notify if updated salary < 50,000
+-- c) Store *new* inserted values in a Tracking table.
+
+-- --- Setup ---
+-- Run this once to create the tables.
+/*
+CREATE TABLE Emp (
+  Emp_no NUMBER PRIMARY KEY,
+  Emp_name VARCHAR2(100),
+  Emp_salary NUMBER(10, 2)
+);
+
+CREATE TABLE Tracking (
+  Emp_no NUMBER,
+  Emp_salary NUMBER(10, 2),
+  track_date DATE
+);
+*/
+
+-- --- Trigger Definition ---
+CREATE OR REPLACE TRIGGER trg_emp_salary_check
+  AFTER INSERT OR UPDATE OR DELETE ON Emp
+  FOR EACH ROW
+BEGIN
+  -- Use DBMS_OUTPUT for notifications.
+  -- Make sure to run 'SET SERVEROUTPUT ON' first.
+
+  IF INSERTING THEN
+    -- Requirement (a): Notify if inserted salary is < 50,000
+    IF :new.Emp_salary < 50000 THEN
+      DBMS_OUTPUT.PUT_LINE(
+        'Alert: Employee ' || :new.Emp_no || ' inserted with salary < 50,000 (' || :new.Emp_salary || ')'
+      );
+    END IF;
+    
+    -- Requirement (c): Store new inserted values in Tracking table
+    INSERT INTO Tracking (Emp_no, Emp_salary, track_date)
+    VALUES (:new.Emp_no, :new.Emp_salary, SYSDATE);
+    
+  ELSIF UPDATING THEN
+    -- Requirement (b): Notify if updated salary is < 50,000
+    IF :new.Emp_salary < 50000 THEN
+      DBMS_OUTPUT.PUT_LINE(
+        'Alert: Employee ' || :new.Emp_no || ' updated to salary < 50,000 (' || :new.Emp_salary || ')'
+      );
+    END IF;
+    
+    -- Note: The prompt only explicitly asks to track INSERTs.
+    -- If you also need to track updates, you would add an
+    -- INSERT INTO Tracking... statement here as well.
+    
+  ELSIF DELETING THEN
+    -- No specific action required for DELETE based on the prompt.
+    DBMS_OUTPUT.PUT_LINE('Employee ' || :old.Emp_no || ' deleted.');
+  END IF;
+
+EXCEPTION
+  WHEN OTHERS THEN
+    DBMS_OUTPUT.PUT_LINE('Error in trg_emp_salary_check: ' || SQLERRM);
+END trg_emp_salary_check;
+/
+
+-- --- PL/SQL Block to Test the Trigger ---
+SET SERVEROUTPUT ON;
+
+BEGIN
+  DBMS_OUTPUT.PUT_LINE('--- Inserting employee 1 (Salary > 50k) ---');
+  INSERT INTO Emp VALUES (1, 'Alice', 60000);
+  
+  DBMS_OUTPUT.PUT_LINE('--- Inserting employee 2 (Salary < 50k) ---');
+  INSERT INTO Emp VALUES (2, 'Bob', 45000);
+  
+  DBMS_OUTPUT.PUT_LINE('--- Updating employee 1 (Salary still > 50k) ---');
+  UPDATE Emp SET Emp_salary = 65000 WHERE Emp_no = 1;
+  
+  DBMS_OUTPUT.PUT_LINE('--- Updating employee 1 (Salary < 50k) ---');
+  UPDATE Emp SET Emp_salary = 48000 WHERE Emp_no = 1;
+
+  DBMS_OUTPUT.PUT_LINE('--- Deleting employee 2 ---');
+  DELETE FROM Emp WHERE Emp_no = 2;
+  
+  COMMIT;
+  DBMS_OUTPUT.PUT_LINE('DML operations complete.');
+END;
+/
+
+-- To see the results:
+-- SELECT * FROM Emp;
+-- SELECT * FROM Tracking;

@@ -1,0 +1,92 @@
+-- Problem 17: PL/SQL block using a Cursor to merge data from N_RollCall into O_RollCall.
+
+-- --- Setup ---
+-- Run this once to create the tables.
+/*
+CREATE TABLE O_RollCall (
+  roll_id NUMBER PRIMARY KEY,
+  student_name VARCHAR2(100),
+  status VARCHAR2(10)
+);
+
+CREATE TABLE N_RollCall (
+  roll_id NUMBER,
+  student_name VARCHAR2(100),
+  status VARCHAR2(10)
+);
+
+-- Sample Data
+INSERT INTO O_RollCall VALUES (1, 'Alice', 'Present');
+INSERT INTO O_RollCall VALUES (2, 'Bob', 'Absent');
+COMMIT;
+
+INSERT INTO N_RollCall VALUES (2, 'Bob', 'Absent');    -- This one is a duplicate
+INSERT INTO N_RollCall VALUES (3, 'Charlie', 'Present'); -- This one is new
+INSERT INTO N_RollCall VALUES (4, 'David', 'Late');    -- This one is new
+COMMIT;
+*/
+
+-- --- PL/SQL Block ---
+SET SERVEROUTPUT ON;
+
+DECLARE
+  -- Cursor to select all records from the new table
+  CURSOR c_new_roll IS
+    SELECT roll_id, student_name, status
+    FROM N_RollCall;
+    
+  v_rec   c_new_roll%ROWTYPE;
+  v_count NUMBER;
+  
+BEGIN
+  -- Open the cursor and start the loop
+  OPEN c_new_roll;
+  
+  LOOP
+    -- Fetch one row at a time
+    FETCH c_new_roll INTO v_rec;
+    -- Exit the loop when no more rows are found
+    EXIT WHEN c_new_roll%NOTFOUND;
+    
+    -- Check if this roll_id already exists in the old table
+    SELECT COUNT(*)
+    INTO v_count
+    FROM O_RollCall
+    WHERE roll_id = v_rec.roll_id;
+    
+    -- If count is 0, the data does not exist, so we insert it
+    IF v_count = 0 THEN
+      INSERT INTO O_RollCall (roll_id, student_name, status)
+      VALUES (v_rec.roll_id, v_rec.student_name, v_rec.status);
+      
+      DBMS_OUTPUT.PUT_LINE('Merged: Roll ID ' || v_rec.roll_id || ' (Name: ' || v_rec.student_name || ')');
+      
+    ELSE
+      -- If count is not 0, the data already exists, so we skip it
+      DBMS_OUTPUT.PUT_LINE('Skipped (Duplicate): Roll ID ' || v_rec.roll_id);
+    END IF;
+    
+  END LOOP;
+  
+  -- Close the cursor
+  CLOSE c_new_roll;
+  
+  COMMIT;
+  DBMS_OUTPUT.PUT_LINE('Merge process complete.');
+
+EXCEPTION
+  WHEN OTHERS THEN
+    DBMS_OUTPUT.PUT_LINE('An error occurred: ' || SQLERRM);
+    ROLLBACK;
+END;
+/
+
+-- Alternative modern approach (does not use a cursor, but is more efficient):
+/*
+MERGE INTO O_RollCall o
+USING N_RollCall n
+ON (o.roll_id = n.roll_id)
+WHEN NOT MATCHED THEN
+  INSERT (roll_id, student_name, status)
+  VALUES (n.roll_id, n.student_name, n.status);
+*/

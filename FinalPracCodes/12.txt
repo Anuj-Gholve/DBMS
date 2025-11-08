@@ -1,0 +1,242 @@
+1) Insert sample documents (5 docs)
+use CompanyDB;
+
+db.Employee.insertMany([
+  {
+    Emp_id: 101,
+    Name: { FName: "Anuj", LName: "Kumar" },
+    Company_name: "Infosys",
+    Salary: 55000,
+    Designation: "Programmer",
+    Age: 26,
+    Expertise: ["MongoDB", "NodeJS", "ReactJS"],
+    DOB: ISODate("1999-04-12"),
+    Email: "anuj.kumar@infosys.com",
+    Contact: "9876543210",
+    Address: [
+      { PAddr: { city: "Pune", Pin_code: "411001" } },
+      { LAddr: { city: "Bangalore", Pin_code: "560001" } }
+    ]
+  },
+  {
+    Emp_id: 102,
+    Name: { FName: "Riya", LName: "Patil" },
+    Company_name: "TCS",
+    Salary: 48000,
+    Designation: "Tester",
+    Age: 25,
+    Expertise: ["MySQL", "Selenium", "Cypress"],
+    DOB: ISODate("2000-06-15"),
+    Email: "riya.patil@tcs.com",
+    Contact: "9988776655",
+    Address: [
+      { PAddr: { city: "Mumbai", Pin_code: "400001" } },
+      { LAddr: { city: "Chennai", Pin_code: "600001" } }
+    ]
+  },
+  {
+    Emp_id: 103,
+    Name: { FName: "Aman", LName: "Verma" },
+    Company_name: "Wipro",
+    Salary: 39000,
+    Designation: "Developer",
+    Age: 28,
+    Expertise: ["MongoDB", "Java", "SpringBoot"],
+    DOB: ISODate("1997-02-05"),
+    Email: "aman.verma@wipro.com",
+    Contact: "9090909090",
+    Address: [
+      { PAddr: { city: "Delhi", Pin_code: "110001" } },
+      { LAddr: { city: "Noida", Pin_code: "201301" } }
+    ]
+  },
+  {
+    Emp_id: 104,
+    Name: { FName: "Maya", LName: "Deshmukh" },
+    Company_name: "TCS",
+    Salary: 60000,
+    Designation: "Developer",
+    Age: 29,
+    Expertise: ["MongoDB", "MySQL", "Cassandra"],
+    DOB: ISODate("1996-07-09"),
+    Email: "maya.deshmukh@tcs.com",
+    Contact: "9876501234",
+    Address: [
+      { PAddr: { city: "Pune", Pin_code: "411001" } },
+      { LAddr: { city: "Hyderabad", Pin_code: "500001" } }
+    ]
+  },
+  {
+    Emp_id: 105,
+    Name: { FName: "Gopal", LName: "Sharma" },
+    Company_name: "TechM",
+    Salary: 47000,
+    Designation: "DBA",
+    Age: 27,
+    Expertise: ["Python", "MongoDB", "PowerBI"],
+    DOB: ISODate("1998-01-23"),
+    Email: "gopal.sharma@techm.com",
+    Contact: "9123456789",
+    Address: [
+      { PAddr: { city: "Kolkata", Pin_code: "700001" } },
+      { LAddr: { city: "Pune", Pin_code: "411001" } }
+    ]
+  }
+]);
+
+2) Aggregation & index tasks — queries and pipelines
+Task 1 — "Using aggregation Return Designation with Total Salary is Above 200000."
+
+Group by Designation, sum salaries, filter > 200000.
+
+db.Employee.aggregate([
+  { $group: { _id: "$Designation", totalSalary: { $sum: "$Salary" } } },
+  { $match: { totalSalary: { $gt: 200000 } } },
+  { $project: { Designation: "$_id", totalSalary: 1, _id: 0 } }
+]);
+
+
+Output: documents like { Designation: "Developer", totalSalary: 240000 } if sum > 200k.
+
+Task 2 — "Aggregate returns names and _id in upper case and in alphabetical order."
+
+Project uppercase full name and uppercase _id (converted to string), then sort by name.
+
+db.Employee.aggregate([
+  {
+    $project: {
+      _id_upper: { $toUpper: { $toString: "$Emp_id" } },
+      fullNameUpper: {
+        $toUpper: { $concat: ["$Name.FName", " ", "$Name.LName"] }
+      }
+    }
+  },
+  { $sort: { fullNameUpper: 1 } }
+]);
+
+
+Each result contains fullNameUpper and _id_upper.
+
+Task 3 — "Using aggregation find Employee with Total Salary for Each City with Designation='DBA'."
+
+We want total salary grouped by city for employees whose Designation = "DBA". Because Address is an array, unwind it and extract city from PAddr.city or LAddr.city (use $ifNull to cover either field).
+
+db.Employee.aggregate([
+  { $match: { Designation: "DBA" } },
+  { $unwind: "$Address" },
+  {
+    $project: {
+      Emp_id: 1,
+      Name: 1,
+      Salary: 1,
+      city: {
+        $ifNull: [
+          "$Address.PAddr.city",
+          "$Address.LAddr.city"
+        ]
+      }
+    }
+  },
+  { $match: { city: { $ne: null } } },
+  {
+    $group: {
+      _id: "$city",
+      totalSalary: { $sum: "$Salary" },
+      employees: { $push: { Emp_id: "$Emp_id", Name: "$Name", Salary: "$Salary" } }
+    }
+  },
+  { $project: { city: "$_id", totalSalary: 1, employees: 1, _id: 0 } }
+]);
+
+
+Result: list of cities with totalSalary for DBAs and a list of DBAs in that city.
+
+Task 4 — "Create Single Field Index on Designation field"
+db.Employee.createIndex({ Designation: 1 });
+
+Task 5 — "Create Multikey Index on Expertise field"
+
+Expertise is an array — creating an index on it makes it a multikey index.
+
+db.Employee.createIndex({ Expertise: 1 });
+
+Task 6 — "Create an Index on Emp_id, compare time to search before & after (hint: add 10000 docs)"
+
+Steps (commands to run locally):
+
+Populate many docs (example JS to generate documents quickly):
+
+// run in mongo shell; this will add 10000 documents (adjust as needed)
+let bulk = db.Employee.initializeUnorderedBulkOp();
+let start = 200; // avoid colliding with sample Emp_id 101..105
+for (let i = start; i < start + 10000; i++) {
+  bulk.insert({
+    Emp_id: i,
+    Name: { FName: "F" + i, LName: "L" + i },
+    Company_name: (i % 3 === 0) ? "TCS" : "Infosys",
+    Salary: Math.floor(30000 + (i % 20000)),
+    Designation: (i % 5 === 0) ? "Developer" : "Programmer",
+    Age: 22 + (i % 20),
+    Expertise: ["MongoDB", "Skill" + (i % 10)],
+    DOB: new Date(1990 + (i % 10), 0, 1),
+    Email: "user" + i + "@example.com",
+    Contact: "9" + (100000000 + i).toString().slice(1),
+    Address: [{ PAddr: { city: "City" + (i % 10), Pin_code: "1000" + (i % 900) } }]
+  });
+}
+bulk.execute();
+
+
+Pick a sample Emp_id to search, e.g. Emp_id: 500.
+
+Measure BEFORE creating index
+
+db.Employee.find({ Emp_id: 500 }).explain("executionStats")
+
+
+Look at fields: executionStats.executionTimeMillis, executionStats.totalDocsExamined.
+
+Create index on Emp_id
+
+db.Employee.createIndex({ Emp_id: 1 });
+
+
+Measure AFTER creating index
+
+db.Employee.find({ Emp_id: 500 }).explain("executionStats")
+
+
+Look at executionStats.executionTimeMillis, executionStats.totalKeysExamined, executionStats.totalDocsExamined.
+
+What to compare / expected outcome
+
+Before index: a COLLSCAN (collection scan) — totalDocsExamined ≈ number of docs (large), executionTimeMillis larger.
+
+After index: an INDEX SEEK — totalKeysExamined small, totalDocsExamined small (only matching docs). executionTimeMillis should drop dramatically.
+
+Use multiple runs and average if results vary. Record both executionTimeMillis and totalDocsExamined for a clean comparison.
+
+Task 7 — "Return a List of Indexes created on employee Collection"
+db.Employee.getIndexes();
+
+Quick notes / tips
+
+Use explain("executionStats") — it gives a lot of useful metrics. For example:
+
+db.Employee.find({ Emp_id: 500 }).explain("executionStats")
+
+
+executionStats.executionTimeMillis — how long the query took
+
+executionStats.totalDocsExamined — how many docs were scanned
+
+executionStats.totalKeysExamined — how many index keys scanned (after index creation)
+
+Multikey index on Expertise lets queries like:
+
+db.Employee.find({ Expertise: "MongoDB" })
+
+
+run fast.
+
+Indexes consume disk / memory — create only needed indexes in production.

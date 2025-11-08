@@ -1,0 +1,92 @@
+Table Creation
+CREATE TABLE CUSTOMERS (
+    CNo INT PRIMARY KEY,
+    Cname VARCHAR(50) NOT NULL,
+    Ccity VARCHAR(50),
+    CMobile VARCHAR(15)
+);
+
+CREATE TABLE ITEMS (
+    INo INT PRIMARY KEY,
+    Iname VARCHAR(50) NOT NULL,
+    Itype VARCHAR(30),
+    Iprice DECIMAL(10,2),
+    Icount INT
+);
+
+CREATE TABLE PURCHASE (
+    PNo INT PRIMARY KEY,
+    Pdate DATE,
+    Pquantity INT,
+    CNo INT,
+    INo INT,
+    FOREIGN KEY (CNo) REFERENCES CUSTOMERS(CNo),
+    FOREIGN KEY (INo) REFERENCES ITEMS(INo)
+);
+
+Insert Sample Data
+INSERT INTO CUSTOMERS VALUES
+(1, 'Maya', 'Pune', '9876543210'),
+(2, 'Gopal', 'Mumbai', '9123456789'),
+(3, 'Riya', 'Delhi', '9988776655'),
+(4, 'Aman', 'Pune', '9090909090');
+
+INSERT INTO ITEMS VALUES
+(101, 'Pen', 'Stationary', 500, 100),
+(102, 'Notebook', 'Stationary', 900, 50),
+(103, 'Calculator', 'Electronics', 1200, 30),
+(104, 'Eraser', 'Stationary', 450, 200),
+(105, 'Bag', 'Accessory', 1500, 25);
+
+INSERT INTO PURCHASE VALUES
+(201, '2025-10-20', 5, 1, 101),
+(202, '2025-10-22', 3, 2, 102),
+(203, '2025-10-25', 2, 3, 103),
+(204, '2025-10-28', 4, 1, 104),
+(205, '2025-11-01', 1, 4, 105);
+
+Queries
+1️⃣ List all stationary items with price between 400/- to 1000/-
+SELECT * 
+FROM ITEMS
+WHERE Itype = 'Stationary' 
+AND Iprice BETWEEN 400 AND 1000;
+
+2️⃣ Change the mobile number of customer “Gopal”
+UPDATE CUSTOMERS
+SET CMobile = '9999999999'
+WHERE Cname = 'Gopal';
+
+3️⃣ Display the item with maximum price
+SELECT Iname, Iprice
+FROM ITEMS
+WHERE Iprice = (SELECT MAX(Iprice) FROM ITEMS);
+
+4️⃣ Display all purchases sorted from the most recent to the oldest
+SELECT * 
+FROM PURCHASE
+ORDER BY Pdate DESC;
+
+5️⃣ Count the number of customers in every city
+SELECT Ccity, COUNT(*) AS Number_of_Customers
+FROM CUSTOMERS
+GROUP BY Ccity;
+
+6️⃣ Display all purchased quantity of Customer Maya
+SELECT c.Cname, i.Iname, p.Pquantity
+FROM PURCHASE p
+JOIN CUSTOMERS c ON p.CNo = c.CNo
+JOIN ITEMS i ON p.INo = i.INo
+WHERE c.Cname = 'Maya';
+
+7️⃣ Create view which shows Iname, Price and Count of all stationary items in descending order of price
+CREATE VIEW Stationary_View AS
+SELECT Iname, Iprice, Icount
+FROM ITEMS
+WHERE Itype = 'Stationary'
+ORDER BY Iprice DESC;
+
+
+✅ To display contents of the view:
+
+SELECT * FROM Stationary_View;

@@ -1,0 +1,64 @@
+-- Problem 21: Stored Function 'Age_calc' to calculate age in
+-- years (return), months (OUT), and days (OUT).
+
+-- --- 1. Stored Function Definition ---
+CREATE OR REPLACE FUNCTION Age_calc (
+  p_dob     IN DATE,
+  p_months  OUT NUMBER,
+  p_days    OUT NUMBER
+) RETURN NUMBER
+IS
+  v_total_months NUMBER;
+  v_years        NUMBER;
+  v_calc_date    DATE; -- Used to calculate remaining days
+BEGIN
+  -- Calculate total months between today and date of birth
+  v_total_months := MONTHS_BETWEEN(SYSDATE, p_dob);
+  
+  -- Calculate years (RETURN value)
+  v_years := TRUNC(v_total_months / 12);
+  
+  -- Calculate remaining months (OUT parameter)
+  p_months := TRUNC(MOD(v_total_months, 12));
+  
+  -- Calculate the date after adding the full years and months
+  v_calc_date := ADD_MONTHS(p_dob, (v_years * 12) + p_months);
+  
+  -- Calculate remaining days (OUT parameter)
+  p_days := TRUNC(SYSDATE) - TRUNC(v_calc_date);
+  
+  -- Return the years
+  RETURN v_years;
+
+EXCEPTION
+  WHEN OTHERS THEN
+    DBMS_OUTPUT.PUT_LINE('Error in Age_calc: ' || SQLERRM);
+    RETURN NULL;
+END Age_calc;
+/
+
+-- --- 2. PL/SQL Block to Use the Function ---
+SET SERVEROUTPUT ON;
+
+DECLARE
+  v_dob    DATE := TO_DATE('15-JAN-1990', 'DD-MON-YYYY');
+  v_years  NUMBER;
+  v_months NUMBER;
+  v_days   NUMBER;
+BEGIN
+  -- Call the function
+  v_years := Age_calc(v_dob, v_months, v_days);
+  
+  DBMS_OUTPUT.PUT_LINE('Date of Birth: ' || TO_CHAR(v_dob, 'DD-MON-YYYY'));
+  DBMS_OUTPUT.PUT_LINE('Today''s Date:  ' || TO_CHAR(SYSDATE, 'DD-MON-YYYY'));
+  DBMS_OUTPUT.PUT_LINE('------------------------------------');
+  DBMS_OUTPUT.PUT_LINE('Calculated Age:');
+  DBMS_OUTPUT.PUT_LINE('Years:   ' || v_years);
+  DBMS_OUTPUT.PUT_LINE('Months:  ' || v_months);
+  DBMS_OUTPUT.PUT_LINE('Days:    ' || v_days);
+  
+  DBMS_OUTPUT.PUT_LINE(
+    'Result: ' || v_years || ' years, ' || v_months || ' months, and ' || v_days || ' days.'
+  );
+END;
+/

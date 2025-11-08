@@ -1,0 +1,84 @@
+-- Problem 23: Row level trigger on CUSTOMERS table for INSERT, UPDATE, or DELETE
+-- operations that displays the salary difference.
+
+-- --- Setup ---
+-- Run this once to create the table.
+/*
+CREATE TABLE CUSTOMERS (
+  id NUMBER PRIMARY KEY,
+  name VARCHAR2(100),
+  salary NUMBER(10, 2)
+);
+
+-- Sample Data
+INSERT INTO CUSTOMERS VALUES (1, 'Alice', 50000);
+COMMIT;
+*/
+
+-- --- Trigger Definition ---
+CREATE OR REPLACE TRIGGER trg_customer_salary_diff
+  AFTER INSERT OR UPDATE OR DELETE ON CUSTOMERS
+  FOR EACH ROW
+DECLARE
+  v_salary_diff NUMBER;
+BEGIN
+  -- Use DBMS_OUTPUT to display messages.
+  -- Make sure to run 'SET SERVEROUTPUT ON' first.
+  
+  IF INSERTING THEN
+    -- For INSERT, the "difference" is the new salary itself.
+    v_salary_diff := :new.salary;
+    DBMS_OUTPUT.PUT_LINE(
+      'INSERTED Customer: ' || :new.id ||
+      ', New Salary: ' || :new.salary
+    );
+    
+  ELSIF UPDATING THEN
+    -- For UPDATE, calculate the difference between new and old.
+    v_salary_diff := :new.salary - :old.salary;
+    DBMS_OUTPUT.PUT_LINE(
+      'UPDATED Customer: ' || :new.id ||
+      ', Old Salary: ' || :old.salary ||
+      ', New Salary: ' || :new.salary ||
+      ', Difference: ' || v_salary_diff
+    );
+    
+  ELSIF DELETING THEN
+    -- For DELETE, the "difference" is the loss of the old salary.
+    v_salary_diff := -1 * :old.salary;
+    DBMS_OUTPUT.PUT_LINE(
+      'DELETED Customer: ' || :old.id ||
+      ', Salary Removed: ' || :old.salary ||
+      ', Difference: ' || v_salary_diff
+    );
+  END IF;
+
+EXCEPTION
+  WHEN OTHERS THEN
+    DBMS_OUTPUT.PUT_LINE('Error in trg_customer_salary_diff: ' || SQLERRM);
+END trg_customer_salary_diff;
+/
+
+-- --- PL/SQL Block to Test the Trigger ---
+SET SERVEROUTPUT ON;
+
+BEGIN
+  DBMS_OUTPUT.PUT_LINE('--- Inserting new customer 2 ---');
+  INSERT INTO CUSTOMERS VALUES (2, 'Bob', 60000);
+  
+  DBMS_OUTPUT.PUT_LINE('--- Updating customer 1''s salary ---');
+  UPDATE CUSTOMERS
+  SET salary = 55000
+  WHERE id = 1;
+  
+  DBMS_OUTPUT.PUT_LINE('--- Deleting customer 2 ---');
+  DELETE FROM CUSTOMERS
+  WHERE id = 2;
+  
+  COMMIT;
+  DBMS_OUTPUT.PUT_LINE('DML operations complete.');
+END;
+/
+
+-- To see the results:
+-- SELECT * FROM CUSTOMERS;
