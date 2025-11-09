@@ -1,27 +1,23 @@
-1️⃣ Create Tables with Constraints
--- Branch Table
+-- Create Tables
 CREATE TABLE Branch (
     branch_name VARCHAR(50) PRIMARY KEY,
     branch_city VARCHAR(50) NOT NULL,
-    assets DECIMAL(15,2)
+    assets DECIMAL(12,2) NOT NULL
 );
 
--- Account Table
 CREATE TABLE Account (
     acc_no INT PRIMARY KEY,
-    branch_name VARCHAR(50) NOT NULL,
-    balance DECIMAL(15,2) NOT NULL,
+    branch_name VARCHAR(50),
+    balance DECIMAL(12,2) NOT NULL,
     FOREIGN KEY (branch_name) REFERENCES Branch(branch_name)
 );
 
--- Customer Table
 CREATE TABLE Customer (
     cust_name VARCHAR(50) PRIMARY KEY,
-    cust_street VARCHAR(100),
+    cust_street VARCHAR(50),
     cust_city VARCHAR(50)
 );
 
--- Depositor Table
 CREATE TABLE Depositor (
     cust_name VARCHAR(50),
     acc_no INT,
@@ -30,15 +26,13 @@ CREATE TABLE Depositor (
     FOREIGN KEY (acc_no) REFERENCES Account(acc_no)
 );
 
--- Loan Table
 CREATE TABLE Loan (
     loan_no INT PRIMARY KEY,
-    branch_name VARCHAR(50) NOT NULL,
-    amount DECIMAL(15,2) NOT NULL,
+    branch_name VARCHAR(50),
+    amount DECIMAL(12,2),
     FOREIGN KEY (branch_name) REFERENCES Branch(branch_name)
 );
 
--- Borrower Table
 CREATE TABLE Borrower (
     cust_name VARCHAR(50),
     loan_no INT,
@@ -47,30 +41,69 @@ CREATE TABLE Borrower (
     FOREIGN KEY (loan_no) REFERENCES Loan(loan_no)
 );
 
-2️⃣ Find the branches where average account balance > 15000
-SELECT branch_name, AVG(balance) AS avg_balance
+-- Insert Sample Data
+INSERT INTO Branch VALUES 
+('Wadia College', 'Pune', 900000),
+('Deccan', 'Pune', 700000),
+('Camp', 'Pune', 800000);
+
+INSERT INTO Account VALUES 
+(101, 'Wadia College', 25000),
+(102, 'Deccan', 30000),
+(103, 'Camp', 12000),
+(104, 'Wadia College', 17000),
+(105, 'Camp', 18000);
+
+INSERT INTO Customer VALUES 
+('Anuj', 'MG Road', 'Pune'),
+('Priya', 'JM Road', 'Pune'),
+('Pooja', 'FC Road', 'Pune'),
+('Amit', 'Laxmi Road', 'Pune'),
+('Sara', 'Bund Garden', 'Pune');
+
+INSERT INTO Depositor VALUES 
+('Anuj', 101),
+('Priya', 102),
+('Pooja', 103),
+('Amit', 104),
+('Sara', 105);
+
+INSERT INTO Loan VALUES 
+(201, 'Wadia College', 15000),
+(202, 'Deccan', 10000),
+(203, 'Wadia College', 1400),
+(204, 'Camp', 25000),
+(205, 'Deccan', 1350);
+
+INSERT INTO Borrower VALUES 
+('Anuj', 201),
+('Priya', 202),
+('Sara', 204);
+
+-- Queries
+
+-- 1. Find the branches where average account balance > 15000
+SELECT branch_name
 FROM Account
 GROUP BY branch_name
 HAVING AVG(balance) > 15000;
 
-3️⃣ Find number of tuples in customer relation
-SELECT COUNT(*) AS total_customers
-FROM Customer;
+-- 2. Find number of tuples in customer relation
+SELECT COUNT(*) AS total_customers FROM Customer;
 
-4️⃣ Calculate total loan amount given by bank
-SELECT SUM(amount) AS total_loan_amount
-FROM Loan;
+-- 3. Calculate total loan amount given by bank
+SELECT SUM(amount) AS total_loan_amount FROM Loan;
 
-5️⃣ Delete all loans with loan amount between 1300 and 1500
+-- 4. Delete all loans with loan amount between 1300 and 1500
 DELETE FROM Loan
 WHERE amount BETWEEN 1300 AND 1500;
 
-6️⃣ Find the average account balance at each branch
+-- 5. Find the average account balance at each branch
 SELECT branch_name, AVG(balance) AS avg_balance
 FROM Account
 GROUP BY branch_name;
 
-7️⃣ Find name of customer and city where customer name starts with letter ‘P’
+-- 6. Find name of Customer and city where customer name starts with letter 'P'
 SELECT cust_name, cust_city
 FROM Customer
 WHERE cust_name LIKE 'P%';
