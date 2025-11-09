@@ -1,21 +1,18 @@
-1️⃣ Create Tables with Constraints
--- Customer Master Table
+-- Create Tables
 CREATE TABLE Cust_Master (
     Cust_no VARCHAR(10) PRIMARY KEY,
     Cust_name VARCHAR(50) NOT NULL,
     Cust_addr VARCHAR(100) NOT NULL
 );
 
--- Order Table
 CREATE TABLE Orders (
     Order_no VARCHAR(10) PRIMARY KEY,
     Cust_no VARCHAR(10),
     Order_date DATE NOT NULL,
-    Qty_Ordered INT CHECK (Qty_Ordered > 0),
+    Qty_Ordered INT NOT NULL,
     FOREIGN KEY (Cust_no) REFERENCES Cust_Master(Cust_no)
 );
 
--- Product Table
 CREATE TABLE Product (
     Product_no VARCHAR(10) PRIMARY KEY,
     Product_name VARCHAR(50) NOT NULL,
@@ -23,97 +20,90 @@ CREATE TABLE Product (
     FOREIGN KEY (Order_no) REFERENCES Orders(Order_no)
 );
 
-2️⃣ Insert Sample Records
+-- Insert Sample Data
 INSERT INTO Cust_Master VALUES
-('C1001', 'Rahul', 'Pune'),
-('C1002', 'Aarti', 'Banglore'),
-('C1003', 'Sanjay', 'Delhi'),
-('C1004', 'Karan', 'Manglore'),
-('C1005', 'Pallavi', 'Banglore'),
-('C1006', 'Manoj', 'Mumbai'),
-('C1007', 'Ramesh', 'Manglore'),
-('C1008', 'Anjali', 'Pune');
+('C1001', 'Anuj', 'Pune'),
+('C1002', 'Ravi', 'Banglore'),
+('C1003', 'Sara', 'Manglore'),
+('C1004', 'Manish', 'Delhi'),
+('C1005', 'Karan', 'Banglore'),
+('C1006', 'Pooja', 'Pune'),
+('C1007', 'Rahul', 'Manglore'),
+('C1008', 'Amit', 'Mumbai');
 
 INSERT INTO Orders VALUES
-('O2001', 'C1001', '2024-03-10', 5),
-('O2002', 'C1002', '2024-03-12', 3),
-('O2003', 'C1005', '2024-03-15', 7),
-('O2004', 'C1007', '2024-03-18', 2),
-('O2005', 'C1008', '2024-03-20', 4);
+('O101', 'C1001', '2024-02-10', 5),
+('O102', 'C1002', '2024-03-15', 2),
+('O103', 'C1003', '2024-03-20', 3),
+('O104', 'C1004', '2024-04-01', 6),
+('O105', 'C1005', '2024-04-15', 4),
+('O106', 'C1007', '2024-05-02', 7),
+('O107', 'C1008', '2024-06-01', 1);
 
 INSERT INTO Product VALUES
-('P3001', 'Laptop', 'O2001'),
-('P3002', 'Mouse', 'O2002'),
-('P3003', 'Keyboard', 'O2003'),
-('P3004', 'Monitor', 'O2004'),
-('P3005', 'Printer', 'O2005');
+('P201', 'Keyboard', 'O101'),
+('P202', 'Mouse', 'O102'),
+('P203', 'Monitor', 'O103'),
+('P204', 'Printer', 'O104'),
+('P205', 'Headphones', 'O105'),
+('P206', 'Speaker', 'O106'),
+('P207', 'Webcam', 'O107');
 
-3️⃣ Queries
-Q1. List names of customers having 'A' as second letter in their name
-SELECT Cust_name
-FROM Cust_Master
+-- Queries
+
+-- 1. List names of customers having 'A' as second letter in their name
+SELECT Cust_name FROM Cust_Master
 WHERE Cust_name LIKE '_A%';
 
-Q2. Display orders from Customer no C1002, C1005, C1007, and C1008
-SELECT *
-FROM Orders
+-- 2. Display order from Customer no C1002, C1005, C1007 and C1008
+SELECT * FROM Orders
 WHERE Cust_no IN ('C1002', 'C1005', 'C1007', 'C1008');
 
-Q3. List Clients who stay in either 'Banglore' or 'Manglore'
-SELECT Cust_name, Cust_addr
-FROM Cust_Master
+-- 3. List Clients who stay in either 'Banglore' or 'Manglore'
+SELECT * FROM Cust_Master
 WHERE Cust_addr IN ('Banglore', 'Manglore');
 
-Q4. Display name of customers & the product_name they have purchased
+-- 4. Display name of customers and the product_name they have purchased
 SELECT c.Cust_name, p.Product_name
 FROM Cust_Master c
 JOIN Orders o ON c.Cust_no = o.Cust_no
 JOIN Product p ON o.Order_no = p.Order_no;
 
-Q5. Create a view View1 consisting of Cust_name and Product_name
+-- 5. Create view View1 consisting of Cust_name, Product_name
 CREATE VIEW View1 AS
 SELECT c.Cust_name, p.Product_name
 FROM Cust_Master c
 JOIN Orders o ON c.Cust_no = o.Cust_no
 JOIN Product p ON o.Order_no = p.Order_no;
 
-
-To see the view:
-
-SELECT * FROM View1;
-
-Q6. Display product_name and quantity purchased by each customer
+-- 6. Display product_name and quantity purchased by each customer
 SELECT c.Cust_name, p.Product_name, o.Qty_Ordered
 FROM Cust_Master c
 JOIN Orders o ON c.Cust_no = o.Cust_no
 JOIN Product p ON o.Order_no = p.Order_no;
 
-Q7. Perform different join operations
+-- 7. Perform different join operations
 
-a) INNER JOIN
-
+-- a) INNER JOIN
 SELECT c.Cust_name, o.Order_no, p.Product_name
 FROM Cust_Master c
 INNER JOIN Orders o ON c.Cust_no = o.Cust_no
 INNER JOIN Product p ON o.Order_no = p.Order_no;
 
-
-b) LEFT JOIN
-
-SELECT c.Cust_name, o.Order_no
+-- b) LEFT JOIN
+SELECT c.Cust_name, p.Product_name
 FROM Cust_Master c
-LEFT JOIN Orders o ON c.Cust_no = o.Cust_no;
+LEFT JOIN Orders o ON c.Cust_no = o.Cust_no
+LEFT JOIN Product p ON o.Order_no = p.Order_no;
 
-
-c) RIGHT JOIN
-
-SELECT c.Cust_name, o.Order_no
+-- c) RIGHT JOIN
+SELECT c.Cust_name, p.Product_name
 FROM Cust_Master c
-RIGHT JOIN Orders o ON c.Cust_no = o.Cust_no;
+RIGHT JOIN Orders o ON c.Cust_no = o.Cust_no
+RIGHT JOIN Product p ON o.Order_no = p.Order_no;
 
-
-d) FULL OUTER JOIN (for databases that support it, like PostgreSQL)
-
-SELECT c.Cust_name, o.Order_no
+-- d) FULL JOIN (For systems supporting it)
+SELECT c.Cust_name, p.Product_name
 FROM Cust_Master c
-FULL OUTER JOIN Orders o ON c.Cust_no = o.Cust_no;
+FULL JOIN Orders o ON c.Cust_no = o.Cust_no
+FULL JOIN Product p ON o.Order_no = p.Order_no;
