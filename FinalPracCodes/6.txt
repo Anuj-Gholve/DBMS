@@ -1,107 +1,94 @@
-1️⃣ Create Tables with Constraints
--- Employee Table
-CREATE TABLE Employee (
-    emp_id INT PRIMARY KEY,
-    employee_name VARCHAR(50) UNIQUE NOT NULL,
-    street VARCHAR(100),
-    city VARCHAR(50)
-);
-
--- Company Table
+-- Create Tables
 CREATE TABLE Company (
     company_name VARCHAR(50) PRIMARY KEY,
     city VARCHAR(50) NOT NULL
 );
 
--- Works Table
+CREATE TABLE Employee (
+    emp_id INT PRIMARY KEY,
+    employee_name VARCHAR(50) NOT NULL UNIQUE,
+    street VARCHAR(100),
+    city VARCHAR(50)
+);
+
 CREATE TABLE Works (
     employee_name VARCHAR(50),
     company_name VARCHAR(50),
-    salary DECIMAL(10,2) CHECK (salary > 0),
+    salary DECIMAL(12,2),
     PRIMARY KEY (employee_name, company_name),
     FOREIGN KEY (employee_name) REFERENCES Employee(employee_name),
     FOREIGN KEY (company_name) REFERENCES Company(company_name)
 );
 
--- Manages Table
 CREATE TABLE Manages (
     employee_name VARCHAR(50),
     manager_name VARCHAR(50),
-    PRIMARY KEY (employee_name),
-    FOREIGN KEY (employee_name) REFERENCES Employee(employee_name)
+    PRIMARY KEY (employee_name, manager_name),
+    FOREIGN KEY (employee_name) REFERENCES Employee(employee_name),
+    FOREIGN KEY (manager_name) REFERENCES Employee(employee_name)
 );
 
-2️⃣ Insert Sample Data
-INSERT INTO Employee VALUES
-(1, 'Rahul', 'MG Road', 'Pune'),
-(2, 'Priya', 'Baner', 'Mumbai'),
-(3, 'Amit', 'Brigade Road', 'Delhi'),
-(4, 'Sneha', 'Kothrud', 'Hyderabad'),
-(5, 'Karan', 'FC Road', 'Pune');
-
+-- Insert Sample Data
 INSERT INTO Company VALUES
 ('TCS', 'Pune'),
-('InfoSys', 'Chennai'),
-('TechM', 'Delhi');
+('InfoSys', 'Hyderabad'),
+('TechM', 'Mumbai'),
+('Wipro', 'Chennai');
+
+INSERT INTO Employee VALUES
+(101, 'Anuj', 'MG Road', 'Pune'),
+(102, 'Riya', 'FC Road', 'Hyderabad'),
+(103, 'Amit', 'JM Road', 'Mumbai'),
+(104, 'Sara', 'Baner', 'Pune'),
+(105, 'Karan', 'Laxmi Road', 'Chennai');
 
 INSERT INTO Works VALUES
-('Rahul', 'TCS', 15000),
-('Priya', 'InfoSys', 12000),
-('Amit', 'TechM', 9000),
-('Sneha', 'TechM', 15000),
-('Karan', 'InfoSys', 10000);
+('Anuj', 'TCS', 12000),
+('Riya', 'InfoSys', 9500),
+('Amit', 'TechM', 15000),
+('Sara', 'TechM', 11000),
+('Karan', 'Wipro', 10000);
 
 INSERT INTO Manages VALUES
-('Rahul', 'Amit'),
-('Priya', 'Sneha'),
-('Amit', 'Rahul'),
-('Sneha', 'Karan'),
-('Karan', 'Priya');
+('Anuj', 'Sara'),
+('Riya', 'Karan'),
+('Amit', 'Anuj'),
+('Sara', 'Amit');
 
-3️⃣ Queries
-Q1. Change the city of employee working with 'InfoSys' to 'Bangalore'
+-- Queries
+
+-- 1. Change the city of employee working with 'InfoSys' to 'Bangalore'
 UPDATE Employee
 SET city = 'Bangalore'
 WHERE employee_name IN (
     SELECT employee_name FROM Works WHERE company_name = 'InfoSys'
 );
 
-Q2. Find names of all employees who earn more than the average salary of all employees of their company
-SELECT w1.employee_name, w1.company_name, w1.salary
-FROM Works w1
-WHERE w1.salary > (
+-- 2. Find names of employees earning more than average salary of their company
+SELECT w.employee_name, w.company_name, w.salary
+FROM Works w
+WHERE w.salary > (
     SELECT AVG(w2.salary)
     FROM Works w2
-    WHERE w1.company_name = w2.company_name
+    WHERE w2.company_name = w.company_name
 );
 
-Q3. Find names, street, and city of employees who work for 'TechM' and earn more than $10,000
+-- 3. Find names, street, and city of employees working for 'TechM' and earning > 10000
 SELECT e.employee_name, e.street, e.city
 FROM Employee e
 JOIN Works w ON e.employee_name = w.employee_name
 WHERE w.company_name = 'TechM' AND w.salary > 10000;
 
-Q4. Change the name of table Manages to Management
+-- 4. Change table name 'Manages' to 'Management'
 ALTER TABLE Manages RENAME TO Management;
 
-Q5. Create Simple and Unique Index on Employee table
--- Simple index on employee_name
-CREATE INDEX idx_employee_name ON Employee(employee_name);
+-- 5. Create Simple and Unique Index on Employee table
+CREATE INDEX idx_emp_city ON Employee(city);  -- Simple index
+CREATE UNIQUE INDEX idx_emp_name ON Employee(employee_name);  -- Unique index
 
--- Unique index on emp_id
-CREATE UNIQUE INDEX idx_emp_id ON Employee(emp_id);
-
-Q6. Display Index Information
-
-(⚙️ Note: The command may differ slightly depending on SQL system used.)
-
-✅ In MySQL
+-- 6. Display index information
+-- (For MySQL)
 SHOW INDEX FROM Employee;
 
-✅ In Oracle / PostgreSQL
-SELECT * 
-FROM USER_INDEXES
-WHERE TABLE_NAME = 'EMPLOYEE';
-
-✅ In SQL Server
-EXEC sp_helpindex 'Employee';
+-- (For PostgreSQL)
+-- \d Employee;
