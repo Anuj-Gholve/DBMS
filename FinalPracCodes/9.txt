@@ -1,9 +1,9 @@
-Table Creation
+-- Create tables
 CREATE TABLE CUSTOMERS (
     CNo INT PRIMARY KEY,
     Cname VARCHAR(50) NOT NULL,
     Ccity VARCHAR(50),
-    CMobile VARCHAR(15)
+    CMobile VARCHAR(15) UNIQUE
 );
 
 CREATE TABLE ITEMS (
@@ -18,75 +18,68 @@ CREATE TABLE PURCHASE (
     PNo INT PRIMARY KEY,
     Pdate DATE,
     Pquantity INT,
-    CNo INT,
+    Cno INT,
     INo INT,
-    FOREIGN KEY (CNo) REFERENCES CUSTOMERS(CNo),
+    FOREIGN KEY (Cno) REFERENCES CUSTOMERS(CNo),
     FOREIGN KEY (INo) REFERENCES ITEMS(INo)
 );
 
-Insert Sample Data
+-- Insert data
 INSERT INTO CUSTOMERS VALUES
-(1, 'Maya', 'Pune', '9876543210'),
-(2, 'Gopal', 'Mumbai', '9123456789'),
-(3, 'Riya', 'Delhi', '9988776655'),
-(4, 'Aman', 'Pune', '9090909090');
+(1, 'Gopal', 'Pune', '9876543210'),
+(2, 'Maya', 'Mumbai', '9898989898'),
+(3, 'Ravi', 'Pune', '9123456789'),
+(4, 'Asha', 'Delhi', '9000000001');
 
 INSERT INTO ITEMS VALUES
-(101, 'Pen', 'Stationary', 500, 100),
-(102, 'Notebook', 'Stationary', 900, 50),
-(103, 'Calculator', 'Electronics', 1200, 30),
-(104, 'Eraser', 'Stationary', 450, 200),
-(105, 'Bag', 'Accessory', 1500, 25);
+(101, 'Pen', 'Stationary', 450, 100),
+(102, 'Notebook', 'Stationary', 800, 50),
+(103, 'Pencil', 'Stationary', 100, 200),
+(104, 'Bag', 'Non-Stationary', 1200, 30),
+(105, 'Marker', 'Stationary', 950, 60);
 
 INSERT INTO PURCHASE VALUES
-(201, '2025-10-20', 5, 1, 101),
-(202, '2025-10-22', 3, 2, 102),
-(203, '2025-10-25', 2, 3, 103),
-(204, '2025-10-28', 4, 1, 104),
-(205, '2025-11-01', 1, 4, 105);
+(201, '2025-10-01', 5, 1, 101),
+(202, '2025-10-05', 2, 2, 102),
+(203, '2025-10-07', 1, 3, 104),
+(204, '2025-10-09', 3, 2, 105),
+(205, '2025-10-11', 4, 4, 103);
 
-Queries
-1️⃣ List all stationary items with price between 400/- to 1000/-
-SELECT * 
-FROM ITEMS
-WHERE Itype = 'Stationary' 
-AND Iprice BETWEEN 400 AND 1000;
+-- 1. List all stationary items with price between 400 and 1000
+SELECT * FROM ITEMS
+WHERE Itype = 'Stationary' AND Iprice BETWEEN 400 AND 1000;
 
-2️⃣ Change the mobile number of customer “Gopal”
+-- 2. Change the mobile number of customer “Gopal”
 UPDATE CUSTOMERS
 SET CMobile = '9999999999'
 WHERE Cname = 'Gopal';
 
-3️⃣ Display the item with maximum price
-SELECT Iname, Iprice
-FROM ITEMS
+-- 3. Display the item with maximum price
+SELECT * FROM ITEMS
 WHERE Iprice = (SELECT MAX(Iprice) FROM ITEMS);
 
-4️⃣ Display all purchases sorted from the most recent to the oldest
-SELECT * 
-FROM PURCHASE
+-- 4. Display all purchases sorted from the most recent to the oldest
+SELECT * FROM PURCHASE
 ORDER BY Pdate DESC;
 
-5️⃣ Count the number of customers in every city
+-- 5. Count the number of customers in every city
 SELECT Ccity, COUNT(*) AS Number_of_Customers
 FROM CUSTOMERS
 GROUP BY Ccity;
 
-6️⃣ Display all purchased quantity of Customer Maya
+-- 6. Display all purchased quantity of Customer Maya
 SELECT c.Cname, i.Iname, p.Pquantity
 FROM PURCHASE p
-JOIN CUSTOMERS c ON p.CNo = c.CNo
+JOIN CUSTOMERS c ON p.Cno = c.CNo
 JOIN ITEMS i ON p.INo = i.INo
 WHERE c.Cname = 'Maya';
 
-7️⃣ Create view which shows Iname, Price and Count of all stationary items in descending order of price
+-- 7. Create view showing Iname, Price, and Count of all stationary items in descending order of price
 CREATE VIEW Stationary_View AS
 SELECT Iname, Iprice, Icount
 FROM ITEMS
 WHERE Itype = 'Stationary'
 ORDER BY Iprice DESC;
 
-
-✅ To display contents of the view:
-
+-- Display the view
 SELECT * FROM Stationary_View;
