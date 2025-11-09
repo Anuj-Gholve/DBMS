@@ -1,4 +1,4 @@
-Table Creation
+-- Create tables
 CREATE TABLE Companies (
     comp_id INT PRIMARY KEY,
     name VARCHAR(50) NOT NULL,
@@ -13,80 +13,58 @@ CREATE TABLE Orders (
     FOREIGN KEY (comp_id) REFERENCES Companies(comp_id)
 );
 
-Insert Sample Data
-INSERT INTO Companies VALUES 
-(101, 'Infosys', 50000, 2018),
-(102, 'TCS', 65000, 2019),
-(103, 'Wipro', 45000, 2020),
-(104, 'TechM', 60000, 2017);
+-- Insert sample data
+INSERT INTO Companies VALUES
+(1, 'TechMinds', 12000, 2018),
+(2, 'InfoSoft', 18000, 2020),
+(3, 'CyberCore', 22000, 2021),
+(4, 'DataPlus', 15000, 2019);
 
-INSERT INTO Orders VALUES 
-(101, 'AI', 30),
-(102, 'Web', 45),
-(103, 'Cloud', 25),
-(104, 'IoT', 20);
+INSERT INTO Orders VALUES
+(1, 'AI', 5),
+(2, 'Cloud', 10),
+(3, 'CyberSecurity', 7),
+(5, 'Analytics', 3);
 
-Queries
-1️⃣ Find names, costs, domains and quantities using Inner Join
+-- 1. INNER JOIN: Names, costs, domains and quantities for companies
 SELECT c.name, c.cost, o.domain, o.quantity
 FROM Companies c
 INNER JOIN Orders o ON c.comp_id = o.comp_id;
 
-2️⃣ Using Left Outer Join
+-- 2. LEFT OUTER JOIN
 SELECT c.name, c.cost, o.domain, o.quantity
 FROM Companies c
 LEFT JOIN Orders o ON c.comp_id = o.comp_id;
 
-3️⃣ Using Right Outer Join
+-- 3. RIGHT OUTER JOIN
 SELECT c.name, c.cost, o.domain, o.quantity
 FROM Companies c
 RIGHT JOIN Orders o ON c.comp_id = o.comp_id;
 
-4️⃣ Using UNION operator
+-- 4. UNION operator (Combine left and right join results)
 SELECT c.name, c.cost, o.domain, o.quantity
 FROM Companies c
-INNER JOIN Orders o ON c.comp_id = o.comp_id
+LEFT JOIN Orders o ON c.comp_id = o.comp_id
 UNION
 SELECT c.name, c.cost, o.domain, o.quantity
 FROM Companies c
-LEFT JOIN Orders o ON c.comp_id = o.comp_id;
+RIGHT JOIN Orders o ON c.comp_id = o.comp_id;
 
-5️⃣ Create View1 showing company name and quantity
+-- 5. Create View View1 (Company name and quantities)
 CREATE VIEW View1 AS
-SELECT c.name, o.quantity
+SELECT c.name AS Company_Name, o.quantity AS Quantity
 FROM Companies c
 JOIN Orders o ON c.comp_id = o.comp_id;
 
-
-✅ Display contents of View1
-
-SELECT * FROM View1;
-
-6️⃣ Create View2 and perform operations
+-- 6. Create View View2 with two columns (cost, year)
 CREATE VIEW View2 AS
-SELECT name, cost FROM Companies;
+SELECT cost, year FROM Companies;
 
+-- Insert, Update, Delete operations on View2
+INSERT INTO View2 VALUES (25000, 2022);
+UPDATE View2 SET cost = 26000 WHERE year = 2022;
+DELETE FROM View2 WHERE year = 2022;
 
-Insert into View2
-
-INSERT INTO View2 VALUES ('HCL', 55000);
-
-
-Update View2
-
-UPDATE View2 SET cost = 58000 WHERE name = 'HCL';
-
-
-Delete from View2
-
-DELETE FROM View2 WHERE name = 'HCL';
-
-
-✅ Display contents of View2
-
-SELECT * FROM View2;
-
-Final Outputs
-Display content of both views
+-- 7. Display content of View1 and View2
 SELECT * FROM View1;
 SELECT * FROM View2;
