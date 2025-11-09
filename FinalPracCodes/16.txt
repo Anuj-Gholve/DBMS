@@ -1,103 +1,87 @@
--- Problem 16: Unnamed PL/SQL block for library fine calculation.
+-- Problem 16: Library Fine Calculation (MySQL Version)
 
--- --- Setup ---
--- Run this once to create the tables.
-/*
+-- Run this once to create the tables
 CREATE TABLE Borrower (
-  Rollin NUMBER,
-  Name VARCHAR2(100),
+  Rollin INT,
+  Name VARCHAR(100),
   DateofIssue DATE,
-  NameofBook VARCHAR2(200),
+  NameofBook VARCHAR(200),
   Status CHAR(1) -- 'I' for Issued, 'R' for Returned
 );
 
 CREATE TABLE Fine (
-  Roll_no NUMBER,
+  Roll_no INT,
   Fine_Date DATE,
-  Amt NUMBER
+  Amt DECIMAL(10,2)
 );
 
--- Sample Data for testing
-INSERT INTO Borrower VALUES (101, 'Student A', SYSDATE - 20, 'PL/SQL Basics', 'I');
-INSERT INTO Borrower VALUES (102, 'Student B', SYSDATE - 40, 'Database Design', 'I');
-INSERT INTO Borrower VALUES (103, 'Student C', SYSDATE - 5, 'Java Programming', 'I');
-COMMIT;
-*/
+-- Sample Data
+INSERT INTO Borrower VALUES 
+(101, 'Student A', DATE_SUB(CURDATE(), INTERVAL 20 DAY), 'PL/SQL Basics', 'I'),
+(102, 'Student B', DATE_SUB(CURDATE(), INTERVAL 40 DAY), 'Database Design', 'I'),
+(103, 'Student C', DATE_SUB(CURDATE(), INTERVAL 5 DAY), 'Java Programming', 'I');
 
--- --- PL/SQL Block ---
--- Enable output to see messages
-SET SERVEROUTPUT ON;
+-- Now create the stored procedure
+DELIMITER $$
 
--- Note: This block uses substitution variables (&) to accept user input.
--- When you run this, your SQL tool will prompt you for these values.
-
-DECLARE
-  -- User input variables
-  p_roll_no     Borrower.Rollin%TYPE := &p_roll_no;
-  p_book_name   Borrower.NameofBook%TYPE := '&p_book_name';
-  
-  -- Variables to hold data
-  v_date_of_issue DATE;
-  v_days_overdue  NUMBER;
-  v_fine_amount   NUMBER := 0;
-  
+CREATE PROCEDURE calculate_fine(IN p_roll_no INT, IN p_book_name VARCHAR(200))
 BEGIN
-  -- 1. Find the book and its issue date
-  BEGIN
-    SELECT DateofIssue
-    INTO v_date_of_issue
-    FROM Borrower
-    WHERE Rollin = p_roll_no
-      AND NameofBook = p_book_name
-      AND Status = 'I';
-  EXCEPTION
-    WHEN NO_DATA_FOUND THEN
-      DBMS_OUTPUT.PUT_LINE('Error: No active issue found for Roll No ' || p_roll_no || ' and book "' || p_book_name || '".');
-      RETURN; -- Exit the block
-  END;
+  DECLARE v_date_of_issue DATE;
+  DECLARE v_days_overdue INT;
+  DECLARE v_fine_amount DECIMAL(10,2) DEFAULT 0;
+  DECLARE no_data_found BOOLEAN DEFAULT FALSE;
 
-  -- 2. Check the number of days
-  v_days_overdue := TRUNC(SYSDATE) - TRUNC(v_date_of_issue);
-  
-  DBMS_OUTPUT.PUT_LINE('Book was issued ' || v_days_overdue || ' days ago.');
+  -- 1. Fetch the issue date (handle case where no row exists)
+  SELECT DateofIssue INTO v_date_of_issue
+  FROM Borrower
+  WHERE Rollin = p_roll_no 
+    AND NameofBook = p_book_name
+    AND Status = 'I'
+  LIMIT 1;
+
+  IF v_date_of_issue IS NULL THEN
+    SELECT CONCAT('No active issue found for Roll No ', p_roll_no, ' and book "', p_book_name, '".') AS Message;
+    LEAVE proc_end;
+  END IF;
+
+  -- 2. Calculate days overdue
+  SET v_days_overdue = DATEDIFF(CURDATE(), v_date_of_issue);
 
   -- 3. Calculate fine
   IF v_days_overdue > 30 THEN
-    -- Rs 50/day for days > 30, and Rs 5/day for the first 30 days
-    v_fine_amount := (30 * 5) + ((v_days_overdue - 30) * 50);
-    DBMS_OUTPUT.PUT_LINE('Fine: (30 days * 5) + (' || (v_days_overdue - 30) || ' days * 50)');
-    
-  ELSIF v_days_overdue >= 15 THEN
-    -- Rs 5/day for days between 15 and 30
-    v_fine_amount := v_days_overdue * 5;
-    DBMS_OUTPUT.PUT_LINE('Fine: (' || v_days_overdue || ' days * 5)');
-    
+    SET v_fine_amount = (30 * 5) + ((v_days_overdue - 30) * 50);
+  ELSEIF v_days_overdue >= 15 THEN
+    SET v_fine_amount = v_days_overdue * 5;
   ELSE
-    -- No fine
-    v_fine_amount := 0;
-    DBMS_OUTPUT.PUT_LINE('No fine applicable.');
+    SET v_fine_amount = 0;
   END IF;
 
-  -- 4. After submitting, change status to 'R'
+  -- 4. Update borrower status to 'R'
   UPDATE Borrower
   SET Status = 'R'
-  WHERE Rollin = p_roll_no
+  WHERE Rollin = p_roll_no 
     AND NameofBook = p_book_name
     AND Status = 'I';
 
-  -- 5. If fine is true (i.e., > 0), store details in fine table
+  -- 5. Insert fine record if applicable
   IF v_fine_amount > 0 THEN
     INSERT INTO Fine (Roll_no, Fine_Date, Amt)
-    VALUES (p_roll_no, SYSDATE, v_fine_amount);
-    DBMS_OUTPUT.PUT_LINE('Fine of Rs ' || v_fine_amount || ' logged for Roll No ' || p_roll_no);
+    VALUES (p_roll_no, CURDATE(), v_fine_amount);
   END IF;
 
-  DBMS_OUTPUT.PUT_LINE('Book "' || p_book_name || '" has been returned.');
-  COMMIT;
+  -- 6. Show messages (simulate DBMS_OUTPUT)
+  SELECT 
+    CONCAT('Book "', p_book_name, '" issued ', v_days_overdue, 
+           ' days ago. Fine: Rs ', v_fine_amount) AS Info,
+    CONCAT('Book "', p_book_name, '" has been returned.') AS StatusMsg;
 
-EXCEPTION
-  WHEN OTHERS THEN
-    DBMS_OUTPUT.PUT_LINE('An unexpected error occurred: ' || SQLERRM);
-    ROLLBACK;
-END;
-/
+  proc_end: BEGIN END;
+END$$
+
+DELIMITER ;
+
+CALL calculate_fine(102, 'Database Design');
+SELECT * FROM Fine;
+SELECT * FROM Borrower;
+
+
