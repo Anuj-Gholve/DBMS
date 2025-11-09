@@ -1,42 +1,27 @@
--- Problem 15: Calculate and store the area of a circle for radius 5 to 9.
-
--- --- Setup ---
--- Run this once to create the table.
-/*
 CREATE TABLE areas (
-  radius NUMBER(10),
-  area NUMBER(14, 4)
+  radius INT,
+  area DECIMAL(14,4)
 );
-*/
 
--- --- PL/SQL Block ---
-DECLARE
-  v_pi   CONSTANT NUMBER := 3.14159265;
-  v_area NUMBER(14, 4);
+DELIMITER $$
+
+CREATE PROCEDURE calc_areas()
 BEGIN
-  -- Clear the table before inserting new values (optional)
-  DELETE FROM areas;
-  
-  -- Loop from radius 5 to 9
-  FOR v_radius IN 5..9 LOOP
-    -- Calculate the area: A = pi * r^2
-    v_area := v_pi * POWER(v_radius, 2);
-    
-    -- Insert the values into the table
-    INSERT INTO areas (radius, area)
-    VALUES (v_radius, v_area);
-    
-    DBMS_OUTPUT.PUT_LINE('Inserted Radius: ' || v_radius || ', Area: ' || v_area);
-  END LOOP;
-  
-  COMMIT;
-  DBMS_OUTPUT.PUT_LINE('Calculation and insertion complete.');
-EXCEPTION
-  WHEN OTHERS THEN
-    DBMS_OUTPUT.PUT_LINE('An error occurred: ' || SQLERRM);
-    ROLLBACK;
-END;
-/
+  DECLARE v_radius INT DEFAULT 5;
+  DECLARE v_area DECIMAL(14,4);
+  DECLARE v_pi DECIMAL(10,8) DEFAULT 3.14159265;
 
--- To see the results:
--- SELECT * FROM areas;
+  DELETE FROM areas;
+
+  WHILE v_radius <= 9 DO
+    SET v_area = v_pi * POW(v_radius, 2);
+    INSERT INTO areas (radius, area) VALUES (v_radius, v_area);
+    SET v_radius = v_radius + 1;
+  END WHILE;
+END$$
+
+DELIMITER ;
+
+CALL calc_areas();
+
+SELECT * FROM areas;
